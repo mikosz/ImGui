@@ -1,8 +1,8 @@
 ﻿#include "SImGuiOverlay.h"
 
-#include <Framework/Application/SlateApplication.h>
-
 #include "ImGuiContext.h"
+
+#include <Framework/Application/SlateApplication.h>
 
 FImGuiDrawList::FImGuiDrawList(ImDrawList* Source)
 {
@@ -33,7 +33,9 @@ public:
 	{
 		Owner = InOwner;
 
-		FSlateApplication::Get().OnApplicationActivationStateChanged().AddRaw(this, &FImGuiInputProcessor::OnApplicationActivationChanged);
+		FSlateApplication::Get()
+			.OnApplicationActivationStateChanged()
+			.AddRaw(this, &FImGuiInputProcessor::OnApplicationActivationChanged);
 	}
 
 	virtual ~FImGuiInputProcessor() override
@@ -236,7 +238,8 @@ public:
 		return HandleMouseButtonDownEvent(SlateApp, Event);
 	}
 
-	virtual bool HandleMouseWheelOrGestureEvent(FSlateApplication& SlateApp, const FPointerEvent& Event, const FPointerEvent* GestureEvent) override
+	virtual bool HandleMouseWheelOrGestureEvent(
+		FSlateApplication& SlateApp, const FPointerEvent& Event, const FPointerEvent* GestureEvent) override
 	{
 		if (!ShouldHandleEvent(SlateApp, Event))
 		{
@@ -290,14 +293,22 @@ SImGuiOverlay::~SImGuiOverlay()
 	}
 }
 
-int32 SImGuiOverlay::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect, FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
+int32 SImGuiOverlay::OnPaint(
+	const FPaintArgs& Args,
+	const FGeometry& AllottedGeometry,
+	const FSlateRect& MyCullingRect,
+	FSlateWindowElementList& OutDrawElements,
+	int32 LayerId,
+	const FWidgetStyle& InWidgetStyle,
+	bool bParentEnabled) const
 {
 	if (!DrawData.bValid)
 	{
 		return LayerId;
 	}
 
-	const FSlateRenderTransform Transform(AllottedGeometry.GetAccumulatedRenderTransform().GetTranslation() - FVector2d(DrawData.DisplayPos));
+	const FSlateRenderTransform Transform(
+		AllottedGeometry.GetAccumulatedRenderTransform().GetTranslation() - FVector2d(DrawData.DisplayPos));
 
 	TArray<FSlateVertex> Vertices;
 	TArray<SlateIndex> Indices;
@@ -365,11 +376,14 @@ int32 SImGuiOverlay::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGe
 			OutDrawElements.PushClip(FSlateClippingZone(ClipRect));
 
 			FSlateDrawElement::MakeCustomVerts(
-				OutDrawElements, LayerId, TextureBrush.GetRenderingResource(),
+				OutDrawElements,
+				LayerId,
+				TextureBrush.GetRenderingResource(),
 				TArray(Vertices.GetData() + DrawCmd.VtxOffset, Vertices.Num() - DrawCmd.VtxOffset),
 				TArray(Indices.GetData() + DrawCmd.IdxOffset, DrawCmd.ElemCount),
-				nullptr, 0, 0
-			);
+				nullptr,
+				0,
+				0);
 
 			OutDrawElements.PopClip();
 		}
@@ -394,7 +408,9 @@ FReply SImGuiOverlay::OnKeyChar(const FGeometry& MyGeometry, const FCharacterEve
 
 	ImGuiIO& IO = ImGui::GetIO();
 
-	IO.AddInputCharacter(CharCast<ANSICHAR>(Event.GetCharacter()));
+	const TCHAR Character = Event.GetCharacter();
+	const FUtf8String Utf8Chars{FStringView{&Character, 1}};
+	IO.AddInputCharactersUTF8(reinterpret_cast<const char*>(*Utf8Chars));
 
 	return IO.WantTextInput ? FReply::Handled() : FReply::Unhandled();
 }
